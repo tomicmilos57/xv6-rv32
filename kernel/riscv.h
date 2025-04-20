@@ -6,7 +6,18 @@ r_mhartid()
   asm volatile("csrr %0, mhartid" : "=r" (x) );
   return x;
 }
+// Physical Memory Protection
+static inline void
+w_pmpcfg0(uint32 x)
+{
+  asm volatile("csrw pmpcfg0, %0" : : "r" (x));
+}
 
+static inline void
+w_pmpaddr0(uint32 x)
+{
+  asm volatile("csrw pmpaddr0, %0" : : "r" (x));
+}
 // Machine Status Register, mstatus
 
 #define MSTATUS_MPP_MASK (3L << 11) // previous mode.
