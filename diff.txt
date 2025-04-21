@@ -1,0 +1,100 @@
+From 5959be851510a4472208dbb61849703c2d0766a1 Mon Sep 17 00:00:00 2001
+From: Aleksa Vuckovic <aleksa@vuckovic.cc>
+Date: Sat, 19 Apr 2025 00:08:55 +0200
+Subject: [PATCH] working on latest qemu
+
+---
+ Makefile       |  2 +-
+ kernel/elf.h   |  2 +-
+ kernel/riscv.h | 13 +++++++++++++
+ kernel/start.c |  6 ++++++
+ user/sh.c      |  1 +
+ 5 files changed, 22 insertions(+), 2 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 241c467..1d53689 100644
+--- a/Makefile
++++ b/Makefile
+@@ -150,7 +150,7 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
+ 	then echo "-gdb tcp::$(GDBPORT)"; \
+ 	else echo "-s -p $(GDBPORT)"; fi)
+ ifndef CPUS
+-CPUS := 3
++CPUS := 1
+ endif
+ 
+ QEMUEXTRA = -drive file=fs1.img,if=none,format=raw,id=x1 -device virtio-blk-device,drive=x1,bus=virtio-mmio-bus.1
+diff --git a/kernel/elf.h b/kernel/elf.h
+index ff2e1ed..aedef61 100644
+--- a/kernel/elf.h
++++ b/kernel/elf.h
+@@ -24,12 +24,12 @@ struct elfhdr {
+ // Program section header
+ struct proghdr {
+   uint32 type;
+-  // uint32 flags; // not in 32 bit ELF!
+   uint32 off;
+   uint32 vaddr;
+   uint32 paddr;
+   uint32 filesz;
+   uint32 memsz;
++  uint32 flags;
+   uint32 align;
+ };
+ 
+diff --git a/kernel/riscv.h b/kernel/riscv.h
+index a789154..c8b313d 100644
+--- a/kernel/riscv.h
++++ b/kernel/riscv.h
+@@ -93,6 +93,19 @@ w_sie(uint32 x)
+   asm volatile("csrw sie, %0" : : "r" (x));
+ }
+ 
++// Physical Memory Protection
++static inline void
++w_pmpcfg0(uint32 x)
++{
++  asm volatile("csrw pmpcfg0, %0" : : "r" (x));
++}
++
++static inline void
++w_pmpaddr0(uint32 x)
++{
++  asm volatile("csrw pmpaddr0, %0" : : "r" (x));
++}
++
+ // Machine-mode Interrupt Enable
+ #define MIE_MEIE (1L << 11) // external
+ #define MIE_MTIE (1L << 7)  // timer
+diff --git a/kernel/start.c b/kernel/start.c
+index 39c3d42..2266f1c 100644
+--- a/kernel/start.c
++++ b/kernel/start.c
+@@ -36,6 +36,12 @@ start()
+   // delegate all interrupts and exceptions to supervisor mode.
+   w_medeleg(0xffff);
+   w_mideleg(0xffff);
++  w_sie(r_sie() | SIE_SEIE | SIE_STIE | SIE_SSIE);
++
++  // configure Physical Memory Protection to give supervisor mode
++  // access to all of physical memory.
++  w_pmpaddr0(0xffffffffull);
++  w_pmpcfg0(0xf);
+ 
+   // ask for clock interrupts.
+   timerinit();
+diff --git a/user/sh.c b/user/sh.c
+index a593bc0..2e967a7 100644
+--- a/user/sh.c
++++ b/user/sh.c
+@@ -52,6 +52,7 @@ struct backcmd {
+ int fork1(void);  // Fork but panics on failure.
+ void panic(char*);
+ struct cmd *parsecmd(char*);
++void runcmd(struct cmd*) __attribute__((noreturn));
+ 
+ // Execute cmd.  Never returns.
+ void
+-- 
+2.49.0
+

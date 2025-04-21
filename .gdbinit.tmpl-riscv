@@ -1,0 +1,4 @@
+# .gdbinit.tmpl
+file kernel
+set gnutarget elf32-littleriscv
+target remote localhost:26000
