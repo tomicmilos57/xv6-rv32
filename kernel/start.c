@@ -45,7 +45,7 @@ start()
   w_pmpcfg0(0xf);
 
   // ask for clock interrupts.
-  timerinit();
+  //timerinit();
 
   // keep each CPU's hartid in its tp register, for cpuid().
   int id = r_mhartid();

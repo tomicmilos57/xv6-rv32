@@ -45,7 +45,7 @@
 
 // this many virtio descriptors.
 // must be a power of two.
-#define NUM 8
+#define NUM 3
 
 struct VRingDesc {
   uint64 addr;

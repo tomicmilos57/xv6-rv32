@@ -17,6 +17,9 @@
 #include "buf.h"
 #include "virtio.h"
 
+#define SDCARD 0
+
+#if SDCARD == 1
 // the address of virtio mmio register r.
 #define R(r) ((volatile uint32 *)(VIRTIO0 + (r)))
 
@@ -269,3 +272,44 @@ virtio_disk_intr()
 
   release(&disk.vdisk_lock);
 }
+#else
+
+#define SD_CARD_BUFFER 0x10001000UL
+#define SD_CARD_ADDRESS 0x10001400UL
+#define SD_CARD_OPERATION 0x10001404UL
+
+void virtio_disk_init(void) {
+}
+
+void virtio_disk_rw(struct buf *b, int write) {
+  volatile uint8* sd_card_buffer = (uint8*)SD_CARD_BUFFER;
+  volatile uint32* sd_card_address = (uint32*)SD_CARD_ADDRESS;
+  volatile uint8* sd_card_operation = (uint8*)SD_CARD_OPERATION;
+
+  *sd_card_address = b->blockno;
+  if(write){
+    for (int i = 0; i < BSIZE; i++) {
+      sd_card_buffer[i] = b->data[i];
+    }
+  }
+
+  if(write)
+    *sd_card_operation = 0x02;
+  else
+    *sd_card_operation = 0x01;
+
+  while(*sd_card_operation){};
+
+  if(!write){
+    for (int i = 0; i < BSIZE; i++) {
+      b->data[i] = sd_card_buffer[i];
+    }
+  }
+
+  b->disk = 0;
+}
+
+void virtio_disk_intr() {
+}
+
+#endif
