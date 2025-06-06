@@ -63,7 +63,7 @@ usertrap(void)
     // an interrupt will change sstatus &c registers,
     // so don't enable until done with those registers.
     intr_on();
-
+    //printf("Process: %d JOJ\n", p->tf->a7);
     syscall();
   } else if((which_dev = devintr()) != 0){
     // ok
@@ -86,6 +86,45 @@ usertrap(void)
 //
 // return to user space
 //
+void print_trapframe(struct trapframe *tf) {
+    printf("trapframe at %p:\n", tf);
+    printf(" kernel_satp   = 0x%x\n", tf->kernel_satp);
+    printf(" kernel_sp     = 0x%x\n", tf->kernel_sp);
+    printf(" kernel_trap   = 0x%x\n", tf->kernel_trap);
+    printf(" epc           = 0x%x\n", tf->epc);
+    printf(" kernel_hartid = 0x%x\n", tf->kernel_hartid);
+    printf(" ra            = 0x%x\n", tf->ra);
+    printf(" sp            = 0x%x\n", tf->sp);
+    printf(" gp            = 0x%x\n", tf->gp);
+    printf(" tp            = 0x%x\n", tf->tp);
+    printf(" t0            = 0x%x\n", tf->t0);
+    printf(" t1            = 0x%x\n", tf->t1);
+    printf(" t2            = 0x%x\n", tf->t2);
+    printf(" s0            = 0x%x\n", tf->s0);
+    printf(" s1            = 0x%x\n", tf->s1);
+    printf(" a0            = 0x%x\n", tf->a0);
+    printf(" a1            = 0x%x\n", tf->a1);
+    printf(" a2            = 0x%x\n", tf->a2);
+    printf(" a3            = 0x%x\n", tf->a3);
+    printf(" a4            = 0x%x\n", tf->a4);
+    printf(" a5            = 0x%x\n", tf->a5);
+    printf(" a6            = 0x%x\n", tf->a6);
+    printf(" a7            = 0x%x\n", tf->a7);
+    printf(" s2            = 0x%x\n", tf->s2);
+    printf(" s3            = 0x%x\n", tf->s3);
+    printf(" s4            = 0x%x\n", tf->s4);
+    printf(" s5            = 0x%x\n", tf->s5);
+    printf(" s6            = 0x%x\n", tf->s6);
+    printf(" s7            = 0x%x\n", tf->s7);
+    printf(" s8            = 0x%x\n", tf->s8);
+    printf(" s9            = 0x%x\n", tf->s9);
+    printf(" s10           = 0x%x\n", tf->s10);
+    printf(" s11           = 0x%x\n", tf->s11);
+    printf(" t3            = 0x%x\n", tf->t3);
+    printf(" t4            = 0x%x\n", tf->t4);
+    printf(" t5            = 0x%x\n", tf->t5);
+    printf(" t6            = 0x%x\n", tf->t6);
+}
 void
 usertrapret(void)
 {
@@ -119,6 +158,7 @@ usertrapret(void)
 
   // tell trampoline.S the user page table to switch to.
   uint32 satp = MAKE_SATP(p->pagetable);
+  //print_trapframe(p->tf);
 
   // jump to trampoline.S at the top of memory, which 
   // switches to the user page table, restores user registers,
@@ -139,8 +179,8 @@ kerneltrap()
   uint32 scause = r_scause();
   
 
-  if((sstatus & SSTATUS_SPP) == 0)
-    panic("kerneltrap: not from supervisor mode");
+  //if((sstatus & SSTATUS_SPP) == 0)
+  //  panic("kerneltrap: not from supervisor mode");
   if(intr_get() != 0)
     panic("kerneltrap: interrupts enabled");
 
