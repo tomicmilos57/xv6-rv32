@@ -17,9 +17,8 @@
 #include "buf.h"
 #include "virtio.h"
 
-#define SDCARD 0
 
-#if SDCARD == 1
+#if SDCARD == 0
 // the address of virtio mmio register r.
 #define R(r) ((volatile uint32 *)(VIRTIO0 + (r)))
 
@@ -246,7 +245,15 @@ virtio_disk_rw(struct buf *b, int write)
   while(b->disk == 1) {
     sleep(b, &disk.vdisk_lock);
   }
-
+  //static int ind = 0;
+  //uint checksum = 0;
+  //if(!write){
+  //  for(int i = 0; i < BSIZE; i++){
+  //    checksum += b->data[i];
+  //  }
+  //  ind++;
+  //  printf("Index: %d, Checksum %x\n", ind, checksum);
+  //}
   disk.info[idx[0]].b = 0;
   free_chain(idx[0]);
 
@@ -285,7 +292,6 @@ void virtio_disk_rw(struct buf *b, int write) {
   volatile uint8* sd_card_buffer = (uint8*)SD_CARD_BUFFER;
   volatile uint32* sd_card_address = (uint32*)SD_CARD_ADDRESS;
   volatile uint8* sd_card_operation = (uint8*)SD_CARD_OPERATION;
-
   *sd_card_address = b->blockno;
   if(write){
     for (int i = 0; i < BSIZE; i++) {
@@ -300,10 +306,15 @@ void virtio_disk_rw(struct buf *b, int write) {
 
   while(*sd_card_operation){};
 
+  //static int ind = 0;
   if(!write){
+    uint checksum = 0;
     for (int i = 0; i < BSIZE; i++) {
       b->data[i] = sd_card_buffer[i];
+      checksum += b->data[i];
     }
+  //  ind++;
+  //  printf("Index: %d, Checksum %x\n", ind, checksum);
   }
 
   b->disk = 0;
