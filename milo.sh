@@ -2,7 +2,15 @@
 
 make clean
 make --eval='SDCARD_EN=1'
+if [ ! $? -eq 0 ]; then
+  echo "EXITING: Objcopy failed"
+  exit -1
+fi
 make fs.img
+if [ ! $? -eq 0 ]; then
+  echo "EXITING: Objcopy failed"
+  exit -1
+fi
 
 if [[ ! -f kernel/kernel ]]; then
   echo "Can not find kernel binary"
@@ -26,12 +34,19 @@ if [[ ! -f bin2mif.py ]]; then
   exit -1
 else
   python bin2mif.py kernel.bin xv6.mif 8
+  dd if=kernel.bin of=kernel_32kB.bin bs=1 count=32768
+  dd if=kernel.bin of=kernel_16kB.bin bs=1 skip=32768 count=16384
+  python bin2mif.py kernel_32kB.bin kernel_32kB.mif 8
+  python bin2mif.py kernel_16kB.bin kernel_16kB.mif 8
 fi
 
 if [[ ! -d ../RISCVerilog/misc ]]; then
   echo "EXITING: Can not find RISCVerilog"
 else
   cp xv6.mif ../RISCVerilog/misc
+  cp kernel_32kB.mif ../RISCVerilog/misc
+  cp kernel_16kB.mif ../RISCVerilog/misc
+  cp fs.img ../RISCVerilog/misc
 fi
 
 if [[ ! -d ../remu/misc ]]; then

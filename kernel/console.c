@@ -31,12 +31,12 @@
 void
 consputc(int c)
 {
-  extern volatile int panicked; // from printf.c
+  //extern volatile int panicked; // from printf.c
 
-  if(panicked){
-    for(;;)
-      ;
-  }
+  //if(panicked){
+  //  for(;;)
+  //    ;
+  //}
 
   if(c == BACKSPACE){
     // if the user typed backspace, overwrite with a space.
@@ -190,7 +190,7 @@ consoleinit(void)
 {
   initlock(&cons.lock, "cons");
 
-  uartinit();
+  //uartinit();
 
   // connect read and write system calls
   // to consoleread and consolewrite.

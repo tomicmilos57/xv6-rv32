@@ -180,6 +180,7 @@ void            plic_complete(int);
 // virtio_disk.c
 void            virtio_disk_init(void);
 void            virtio_disk_rw(struct buf *, int);
+int             virtio_disk_test(int);
 void            virtio_disk_intr();
 
 // number of elements in fixed-size array

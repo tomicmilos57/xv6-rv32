@@ -10,11 +10,14 @@ void
 main()
 {
   if(cpuid() == 0){
+    uartputc('r');
     consoleinit();
     printfinit();
     printf("\n");
     printf("xv6 kernel is booting\n");
     printf("\n");
+    int checksum = virtio_disk_test(1);
+    printf("CHECKSUM %d\n", checksum);
     printf("kinit()\n");
     kinit();         // physical page allocator
     printf("kvminit()\n");

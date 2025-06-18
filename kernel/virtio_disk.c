@@ -282,19 +282,20 @@ virtio_disk_intr()
 #else
 
 #define SD_CARD_BUFFER 0x10001000UL
-#define SD_CARD_ADDRESS 0x10001400UL
-#define SD_CARD_OPERATION 0x10001404UL
+#define SD_CARD_ADDRESS 0x10001200UL
+#define SD_CARD_OPERATION 0x10001204UL
 
 void virtio_disk_init(void) {
 }
 
+#define HWBSIZE 512
 void virtio_disk_rw(struct buf *b, int write) {
   volatile uint8* sd_card_buffer = (uint8*)SD_CARD_BUFFER;
   volatile uint32* sd_card_address = (uint32*)SD_CARD_ADDRESS;
   volatile uint8* sd_card_operation = (uint8*)SD_CARD_OPERATION;
-  *sd_card_address = b->blockno;
+  *sd_card_address = b->blockno*2 * 512;
   if(write){
-    for (int i = 0; i < BSIZE; i++) {
+    for (int i = 0; i < HWBSIZE; i++) {
       sd_card_buffer[i] = b->data[i];
     }
   }
@@ -306,20 +307,60 @@ void virtio_disk_rw(struct buf *b, int write) {
 
   while(*sd_card_operation){};
 
-  //static int ind = 0;
   if(!write){
-    uint checksum = 0;
-    for (int i = 0; i < BSIZE; i++) {
+    for (int i = 0; i < HWBSIZE; i++) {
       b->data[i] = sd_card_buffer[i];
-      checksum += b->data[i];
     }
-  //  ind++;
-  //  printf("Index: %d, Checksum %x\n", ind, checksum);
+  }
+
+  *sd_card_address = b->blockno * 2 * 512 + 512;
+  if(write){
+    for (int i = 0; i < HWBSIZE; i++) {
+      sd_card_buffer[i] = b->data[HWBSIZE + i];
+    }
+  }
+
+  if(write)
+    *sd_card_operation = 0x02;
+  else
+    *sd_card_operation = 0x01;
+
+  while(*sd_card_operation){};
+
+  if(!write){
+    for (int i = 0; i < HWBSIZE; i++) {
+      b->data[HWBSIZE + i] = sd_card_buffer[i];
+    }
   }
 
   b->disk = 0;
 }
 
+int virtio_disk_test(int blockno) {
+  volatile uint8* sd_card_buffer = (uint8*)SD_CARD_BUFFER;
+  volatile uint32* sd_card_address = (uint32*)SD_CARD_ADDRESS;
+  volatile uint8* sd_card_operation = (uint8*)SD_CARD_OPERATION;
+
+  *sd_card_address = blockno*2 * 512;
+  *sd_card_operation = 0x01;
+
+  while(*sd_card_operation){};
+
+  int checksum = 0;
+  for (int i = 0; i < HWBSIZE; i++) {
+    checksum += sd_card_buffer[i];
+  }
+
+  *sd_card_address = blockno * 2 * 512 + 512;
+  *sd_card_operation = 0x01;
+
+  while(*sd_card_operation){};
+
+  for (int i = 0; i < HWBSIZE; i++) {
+    checksum += sd_card_buffer[i];
+  }
+  return checksum;
+}
 void virtio_disk_intr() {
 }
 
