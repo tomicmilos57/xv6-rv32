@@ -73,6 +73,7 @@ uartgetc(void)
 {
   if(ReadReg(LSR) & 0x01){
     // input data is ready.
+    //uartputc(ReadReg(RHR));
     return ReadReg(RHR);
   } else {
     return -1;

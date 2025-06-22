@@ -14,6 +14,14 @@ _entry:
         # stack0 is declared in start.c,
         # with a 4096-byte stack per CPU.
         # sp = stack0 + (hartid * 4096)
+        la  a0, __bss_start
+        la  a1, __bss_end
+bss_clear_loop:
+        beq a0, a1, bss_clear_done
+        sw  zero, 0(a0)
+        addi a0, a0, 4
+        j   bss_clear_loop
+bss_clear_done:
         la sp, stack0
         li a0, 1024*4
 	csrr a1, mhartid

@@ -10,16 +10,19 @@ void
 main()
 {
   if(cpuid() == 0){
-    uartputc('r');
     consoleinit();
     printfinit();
     printf("\n");
     printf("xv6 kernel is booting\n");
     printf("\n");
-    int checksum = virtio_disk_test(1);
-    printf("CHECKSUM %d\n", checksum);
+    //int checksum = virtio_disk_test(1);
+    //printf("CHECKSUM %d\n", checksum);
     printf("kinit()\n");
     kinit();         // physical page allocator
+    //for (int i = 0; i < 256; i ++) {
+    //  printf("KALLOC TEST %d: %d\n", i, kalloc());
+    //}
+    //printf("KALLOC TEST1: %x\n", (uint32)kalloc());
     printf("kvminit()\n");
     kvminit();       // create kernel page table
     printf("kvminithart()\n");

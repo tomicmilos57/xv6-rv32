@@ -36,6 +36,7 @@ else
   python bin2mif.py kernel.bin xv6.mif 8
   dd if=kernel.bin of=kernel_32kB.bin bs=1 count=32768
   dd if=kernel.bin of=kernel_16kB.bin bs=1 skip=32768 count=16384
+  dd if=/dev/zero bs=1 count=$((16384 - $(stat -c%s kernel_16kB.bin))) >>kernel_16kB.bin
   python bin2mif.py kernel_32kB.bin kernel_32kB.mif 8
   python bin2mif.py kernel_16kB.bin kernel_16kB.mif 8
 fi

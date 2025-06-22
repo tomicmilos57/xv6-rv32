@@ -227,6 +227,7 @@ devintr()
     int irq = plic_claim();
 
     if(irq == UART0_IRQ){
+      //printf("UARTINTR\n");
       uartintr();
     } else if(irq == VIRTIO0_IRQ){
       virtio_disk_intr();
